@@ -28,11 +28,9 @@ function renderBehaviourFeature() {
   target.innerHTML = `
     <div class="story-kicker">${esc(item.kicker)}</div>
     <h3>${esc(item.title)}</h3>
-    <p class="story-hook">${esc(item.hook)}</p>
-    <div class="story-copy">
-      ${item.story.map(paragraph => `<p>${esc(paragraph)}</p>`).join("")}
+    <div class="story-copy story-copy-flow">
+      ${item.story.map((paragraph, index) => `<p class="story-p story-p-${index + 1}">${esc(paragraph)}</p>`).join("")}
     </div>
-    <p class="story-outcome">${esc(item.outcome)}</p>
   `;
 }
 
@@ -40,21 +38,19 @@ function renderCase(key, target) {
   const item = EOI.cases[key];
   if (!item || !target) return;
 
+  const intro = item.intro ? `<p class="case-summary">${esc(item.intro)}</p>` : "";
+  const sections = item.sections.map((section, index) => `
+    <div class="case-block ${index === 0 ? "first" : ""} ${section.emphasis ? "emphasis" : ""}">
+      <span>${esc(section.label)}</span>
+      <p>${esc(section.body)}</p>
+    </div>
+  `).join("");
+
   target.innerHTML = `
     <div class="case-kicker">${esc(item.label)}</div>
     <h2>${esc(item.title)}</h2>
-    <div class="case-block first">
-      <span>WHAT HAPPENED</span>
-      <p>${esc(item.summary)}</p>
-    </div>
-    <div class="case-block">
-      <span>WHAT I DID</span>
-      <p>${esc(item.action)}</p>
-    </div>
-    <div class="case-block outcome">
-      <span>WHY IT MATTERS</span>
-      <p>${esc(item.outcome)}</p>
-    </div>
+    ${intro}
+    ${sections}
     <div class="tag-row">${item.tags.map(tag => `<span>${esc(tag)}</span>`).join("")}</div>
   `;
 }
@@ -63,11 +59,19 @@ function renderPrinciple(principle) {
   const target = $("#principleDialogBody");
   if (!principle || !target) return;
 
+  const evidence = principle.evidence?.length ? `
+    <div class="principle-evidence">
+      <div class="proof-label">${esc(principle.evidenceTitle || "EVIDENCE")}</div>
+      ${principle.evidence.map(paragraph => `<p>${esc(paragraph)}</p>`).join("")}
+    </div>
+  ` : "";
+
   target.innerHTML = `
-    <div class="case-kicker">BEHAVIOUR RULE ${esc(principle.number)}</div>
+    <div class="case-kicker">BEHAVIOUR PRINCIPLE ${esc(principle.number)}</div>
     <h2>${esc(principle.title)}</h2>
     <blockquote>${esc(principle.quote)}</blockquote>
     <p class="case-summary">${esc(principle.note)}</p>
+    ${evidence}
   `;
   openDialog("#principleDialog");
 }
@@ -96,7 +100,9 @@ function renderChallenge(index) {
   body.innerHTML = `
     <div class="case-kicker">PANEL CHALLENGE</div>
     <h2>${esc(challenge.q)}</h2>
-    <p class="case-summary challenge-answer">${esc(challenge.a)}</p>
+    <div class="challenge-answer">
+      ${challenge.a.map(paragraph => `<p>${esc(paragraph)}</p>`).join("")}
+    </div>
     <div class="proof-label">OPEN THE PROOF</div>
     <div class="proof-strip">
       ${challenge.keys.map(key => `<button type="button" data-proof="${esc(key)}">${esc(EOI.cases[key].title)}</button>`).join("")}
@@ -132,28 +138,6 @@ function initChallenge() {
   renderChallenge(0);
 }
 
-function setQuickMode(enabled) {
-  const toggle = $("#quickToggle");
-  const mode = $("#deskMode");
-  const instruction = $("#deskInstruction");
-
-  document.body.classList.toggle("quick", enabled);
-  toggle?.setAttribute("aria-pressed", enabled ? "true" : "false");
-  if (toggle) toggle.textContent = enabled ? "Explore all" : "Quick scan";
-  if (mode) mode.textContent = enabled ? "Quick scan · behaviour + 4 essentials" : "Explore all";
-  if (instruction) {
-    instruction.textContent = enabled
-      ? "The behaviour case above, then four examples that make the wider case fastest."
-      : "Choose what matters. You do not need to open everything.";
-  }
-
-  $$(".object").forEach(object => {
-    const unavailable = enabled && !object.classList.contains("must");
-    object.disabled = unavailable;
-    object.setAttribute("aria-hidden", unavailable ? "true" : "false");
-  });
-}
-
 function showCase(key, button) {
   renderCase(key, $("#caseBody"));
   openDialog("#caseDialog");
@@ -182,12 +166,7 @@ function init() {
     button.addEventListener("click", () => showCase(button.dataset.case, button));
   });
 
-  $("#challengeBtn")?.addEventListener("click", () => openDialog("#challengeDialog"));
   $("#challengeBtn2")?.addEventListener("click", () => openDialog("#challengeDialog"));
-
-  $("#quickToggle")?.addEventListener("click", () => {
-    setQuickMode(!document.body.classList.contains("quick"));
-  });
 
   $("#coffee")?.addEventListener("click", () => {
     showToast("Coffee helps. Evidence helps more.");
