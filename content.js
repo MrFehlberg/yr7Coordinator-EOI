@@ -1,6 +1,6 @@
 window.EOI = {
   behaviourFeature: {
-    kicker: "THE EVIDENCE I WOULD WANT A PANEL TO SEE FIRST",
+    kicker: "BEHAVIOUR LEADERSHIP IN PRACTICE",
     title: "Calm first. Conversation second. The line still holds.",
     hook: "A behaviour philosophy is easy to believe in when everyone is calm. The useful test is whether it still works when a student is loud, angry and absolutely certain that the unreasonable person in the room is you.",
 
